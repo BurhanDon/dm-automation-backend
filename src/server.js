@@ -3,7 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { connectDB } = require('./config/database');
-const { initRedis } = require('./config/redis');
+const { initMemcache } = require('./config/memcache');
 const config = require('./config/env');
 const requestLogger = require('./middleware/requestLogger');
 const errorHandler = require('./middleware/errorHandler');
@@ -26,7 +26,7 @@ app.set('trust proxy', 1);
 app.use(helmet());
 app.use(
   cors({
-    origin: config.clientUrl,
+    origin: config.client.url,
     credentials: true,
   })
 );
@@ -75,9 +75,9 @@ const startServer = async () => {
     await connectDB();
     console.log('✓ MongoDB connected');
 
-    // Initialize Redis
-    await initRedis();
-    console.log('✓ Redis connected');
+    // Initialize Memcached
+    await initMemcache();
+    console.log('✓ Memcached connected');
 
     // Start listening
     const PORT = config.port || 3001;

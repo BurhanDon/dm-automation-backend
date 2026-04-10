@@ -10,7 +10,7 @@ Production-ready Node.js backend for Instagram DM Automation SaaS platform.
 - 🔔 **Webhook Signature Verification** with HMAC-SHA256
 - 🎯 **Smart Flow Execution** with 24-hour messaging window support
 - 💾 **Encryption at Rest** for Instagram access tokens (AES-256-GCM)
-- ⚡ **Job Queue** using BullMQ + Redis for reliable DM delivery
+- ⚡ **Memcached-backed Queue Locking** for reliable DM delivery dedupe
 - 📊 **Rate Limiting** with per-account limits (200 DMs/hour)
 - 🔍 **Comprehensive Logging** and audit trail
 - ✅ **Input Validation** using express-validator
@@ -20,7 +20,7 @@ Production-ready Node.js backend for Instagram DM Automation SaaS platform.
 - **Runtime**: Node.js (CommonJS)
 - **Framework**: Express.js
 - **Database**: MongoDB + Mongoose
-- **Cache/Queue**: Redis + BullMQ
+- **Cache/Queue Locking**: Memcached + in-process queue adapter
 - **Authentication**: JWT + bcrypt
 - **Encryption**: AES-256-GCM
 - **External APIs**: Meta Graph API v21.0, OpenAI Chat Completions
@@ -33,7 +33,7 @@ Production-ready Node.js backend for Instagram DM Automation SaaS platform.
 
 - Node.js 18+
 - MongoDB 5.0+
-- Redis 6.0+
+- Memcached 1.6+
 - Meta Developer Account (for Instagram OAuth)
 - OpenAI API Key
 
@@ -58,9 +58,9 @@ NODE_ENV=development
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/dm-automation
 
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
+# Memcached
+MEMCACHED_SERVERS=127.0.0.1:11211
+MEMCACHED_TTL_SECONDS=300
 
 # JWT
 JWT_ACCESS_SECRET=your-access-secret-key
@@ -140,14 +140,14 @@ npm run jobs
 ```
 backend/
 ├── src/
-│   ├── config/          # Configuration files (env, database, redis)
+│   ├── config/          # Configuration files (env, database, memcache)
 │   ├── controllers/     # Route handlers
 │   ├── middleware/      # Express middleware
 │   ├── models/          # Mongoose schemas
 │   ├── routes/          # API route definitions
 │   ├── services/        # Business logic
 │   ├── utils/           # Utility functions (encryption, tokens, etc)
-│   ├── jobs/            # BullMQ job processors
+│   ├── jobs/            # Worker bootstrap scripts
 │   ├── tests/           # Test files
 │   └── server.js        # Express app initialization
 ├── package.json
@@ -171,8 +171,8 @@ Ensure these are set in your production environment:
 NODE_ENV=production
 PORT=3001
 MONGODB_URI=[production-mongodb-uri]
-REDIS_HOST=[production-redis-host]
-REDIS_PORT=6379
+MEMCACHED_SERVERS=[production-memcached-host:11211]
+MEMCACHED_TTL_SECONDS=300
 JWT_ACCESS_SECRET=[strong-random-string]
 JWT_REFRESH_SECRET=[strong-random-string]
 ENCRYPTION_KEY=[32-byte-hex-key]

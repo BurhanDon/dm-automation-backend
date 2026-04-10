@@ -2,20 +2,7 @@ const WebhookEvent = require('../models/WebhookEvent');
 const InstagramAccount = require('../models/InstagramAccount');
 const AutomationFlow = require('../models/AutomationFlow');
 const Conversation = require('../models/Conversation');
-const { Queue } = require('bullmq');
-const { redisClient } = require('../config/redis');
-
-const dmSendQueue = new Queue('dm-send', {
-  connection: redisClient,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 2000,
-    },
-    removeOnComplete: true,
-  },
-});
+const dmSendQueue = require('./dmQueue');
 
 const parseWebhookPayload = (payload) => {
   if (!payload.entry || !payload.entry[0]) {
@@ -89,6 +76,12 @@ const processWebhookEvent = async (payload) => {
             accountAccessToken: account.accessToken,
           },
           {
+            attempts: 3,
+            backoff: {
+              type: 'exponential',
+              delay: 2000,
+            },
+            removeOnComplete: true,
             priority: 10,
             delay: 0,
           }
